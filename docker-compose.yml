@@ -6,4 +6,5 @@ services:
       - "31080:18080"
     environment:
       - TZ=Asia/Taipei
-    # 之後如果要持久化資料，在這裡加 volumes
+    volumes:
+      - ./dgr-data:/opt/digirunner/db
