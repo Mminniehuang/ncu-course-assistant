@@ -1,3 +1,11 @@
+# --- NCU Project Specific ---
+# 排除 digiRunner 的資料庫實體檔案
+dgr-data/
+
+# 排除個人的環境變數設定檔
+.env
+
+# --- ---
 # Compiled class file
 *.class
 
