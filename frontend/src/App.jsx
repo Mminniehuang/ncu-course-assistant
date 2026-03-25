@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Chatbot from "./components/Chatbot";
+import Announcements from "./pages/Announcements";
 import Schedule from "./pages/Schedule";
 import Courses from "./pages/Courses";
 import Login from "./pages/Login";
@@ -25,7 +26,7 @@ function App() {
       <Navbar isLogin={isLogin} setIsLogin={setIsLogin} />
 
       <Routes>
-        <Route path="/" element={<Navigate to="/courses" />} />
+        <Route path="/" element={<Announcements />} />
         <Route path="/login" element={<Login setIsLogin={setIsLogin} />} />
         <Route path="/courses" element={<Courses />} />  {/* 任何人都能看 */}
   
