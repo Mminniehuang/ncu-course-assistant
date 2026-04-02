@@ -1,3 +1,4 @@
+// src/components/Chatbot.jsx
 import { useState } from "react";
 
 function Chatbot({ isLogin }) {
@@ -6,20 +7,52 @@ function Chatbot({ isLogin }) {
     { role: "ai", text: "你好！我是選課助手 🤖" },
   ]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!isLogin) return null; // 🔥 未登入不顯示
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
-    const newMessages = [
-      ...messages,
-      { role: "user", text: input },
-      { role: "ai", text: "（這裡之後會接 Dify 🤖）" },
-    ];
-
-    setMessages(newMessages);
+    const userMessage = { role: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("https://api.dify.ai/v1/workflows/run", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer ***REMOVED***", // ⚠️ 換成你的 Dify API key
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: {
+            name: "王小明",        // 🔹 預設值
+            dept: "資訊管理學系",       // 🔹 預設值
+            grade: "三",   // 🔹 預設值
+            query: input              // 🔹 使用者輸入
+          }, // ⚠️ 依你的 workflow 設計調整 key
+          response_mode: "blocking",
+          user: "user-123", // 可以用登入者 ID
+        }),
+      });
+
+      const data = await response.json();
+
+      // ⚠️ workflow 回傳欄位可能是 data.output.answer
+      const aiText = data.text || "🤖 沒有取得回覆";
+
+      setMessages((prev) => [...prev, { role: "ai", text: aiText }]);
+    } catch (error) {
+      console.error(error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", text: "發生錯誤，請稍後再試 🤖" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,25 +91,30 @@ function Chatbot({ isLogin }) {
         >
           <div className="p-2 border-bottom">選課助手 🤖</div>
 
-          <div style={{ flex: 1, overflowY: "auto" }} className="p-2">
+          <div
+            style={{ flex: 1, overflowY: "auto" }}
+            className="p-2"
+          >
             {messages.map((msg, i) => (
               <div
                 key={i}
-                style={{
-                  textAlign: msg.role === "user" ? "right" : "left",
-                }}
+                style={{ textAlign: msg.role === "user" ? "right" : "left" }}
               >
                 <span
                   className={`badge ${
-                    msg.role === "user"
-                      ? "bg-primary"
-                      : "bg-secondary"
+                    msg.role === "user" ? "bg-primary" : "bg-secondary"
                   }`}
                 >
                   {msg.text}
                 </span>
               </div>
             ))}
+
+            {loading && (
+              <div style={{ textAlign: "left" }}>
+                <span className="badge bg-secondary">🤖 回覆中...</span>
+              </div>
+            )}
           </div>
 
           <div className="p-2 d-flex">
@@ -84,6 +122,8 @@ function Chatbot({ isLogin }) {
               className="form-control me-2"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="輸入你的問題..."
             />
             <button className="btn btn-primary" onClick={handleSend}>
               送出
