@@ -1,5 +1,8 @@
 // src/components/Chatbot.jsx
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 
 function Chatbot({ isLogin }) {
   const [open, setOpen] = useState(false);
@@ -9,38 +12,38 @@ function Chatbot({ isLogin }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (!isLogin) return null; // 🔥 未登入不顯示
+  const messagesEndRef = useRef(null);
+
+  // 🔥 自動滾動到底部
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  if (!isLogin) return null;
 
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { role: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const userInput = input;
+
+    // 顯示使用者訊息
+    setMessages((prev) => [...prev, { role: "user", text: userInput }]);
     setInput("");
     setLoading(true);
 
     try {
-      const response = await fetch("https://api.dify.ai/v1/workflows/run", {
+      // ✅ 改成打你的 backend
+      const response = await fetch("http://localhost:3000/api/chatbot", {
         method: "POST",
         headers: {
-          "Authorization": "Bearer ***REMOVED***", // ⚠️ 換成你的 Dify API key
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inputs: {
-            name: "王小明",        // 🔹 預設值
-            dept: "資訊管理學系",       // 🔹 預設值
-            grade: "三",   // 🔹 預設值
-            query: input              // 🔹 使用者輸入
-          }, // ⚠️ 依你的 workflow 設計調整 key
-          response_mode: "blocking",
-          user: "user-123", // 可以用登入者 ID
+          query: userInput,
         }),
       });
 
       const data = await response.json();
-
-      // ⚠️ workflow 回傳欄位可能是 data.output.answer
       const aiText = data.text || "🤖 沒有取得回覆";
 
       setMessages((prev) => [...prev, { role: "ai", text: aiText }]);
@@ -91,32 +94,47 @@ function Chatbot({ isLogin }) {
         >
           <div className="p-2 border-bottom">選課助手 🤖</div>
 
-          <div
-            style={{ flex: 1, overflowY: "auto" }}
-            className="p-2"
-          >
+          {/* 訊息區 */}
+          <div style={{ flex: 1, overflowY: "auto" }} className="p-2">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                style={{ textAlign: msg.role === "user" ? "right" : "left" }}
+                style={{
+                  textAlign: msg.role === "user" ? "right" : "left",
+                  marginBottom: "10px",
+                }}
               >
-                <span
-                  className={`badge ${
-                    msg.role === "user" ? "bg-primary" : "bg-secondary"
-                  }`}
-                >
-                  {msg.text}
-                </span>
+                {msg.role === "user" ? (
+                  <span className="badge bg-primary">{msg.text}</span>
+                ) : (
+                  <div
+                    className="bg-light p-2 rounded"
+                    style={{
+                      display: "inline-block",
+                      maxWidth: "100%",
+                      overflowX: "auto", // 🔥 表格可滑動
+                    }}
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkBreaks, remarkGfm]}>
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             ))}
 
+            {/* loading */}
             {loading && (
               <div style={{ textAlign: "left" }}>
                 <span className="badge bg-secondary">🤖 回覆中...</span>
               </div>
             )}
+
+            {/* 🔥 滾動定位點 */}
+            <div ref={messagesEndRef} />
           </div>
 
+          {/* 輸入區 */}
           <div className="p-2 d-flex">
             <input
               className="form-control me-2"
