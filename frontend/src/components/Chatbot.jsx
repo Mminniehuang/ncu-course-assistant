@@ -32,12 +32,12 @@ function Chatbot({ isLogin }) {
     setLoading(true);
 
     try {
-      // ✅ 改成打你的 backend
       const response = await fetch("http://localhost:3000/api/chatbot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           query: userInput,
         }),

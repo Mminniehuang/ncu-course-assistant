@@ -1,8 +1,6 @@
-function Login({ setIsLogin }) {
+function Login() {
   const handleLogin = () => {
-    localStorage.setItem("isLogin", "true");
-    setIsLogin(true);
-    window.location.href = "/";
+    window.location.href = "http://localhost:3000/auth/login";
   };
 
   return (
@@ -10,7 +8,7 @@ function Login({ setIsLogin }) {
       <h2>登入系統</h2>
 
       <button className="btn btn-primary mt-3" onClick={handleLogin}>
-        模擬登入
+        使用 Portal 登入
       </button>
     </div>
   );
