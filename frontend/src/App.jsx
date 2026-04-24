@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Chatbot from "./components/Chatbot";
+import Announcements from "./pages/Announcements";
 import Schedule from "./pages/Schedule";
 import Courses from "./pages/Courses";
 import Login from "./pages/Login";
@@ -9,23 +10,35 @@ import Enroll from "./pages/Enroll";
 
 function App() {
   const [isLogin, setIsLogin] = useState(false);
-
-  // ⭐ 全域「已選課」
   const [selectedCourses, setSelectedCourses] = useState([]);
 
+  // 取得當前網址資訊
+  const location = useLocation();
+
   useEffect(() => {
-    const loginStatus = localStorage.getItem("isLogin");
-    if (loginStatus === "true") {
+    // 1. 檢查網址參數是否有 ?login=success
+    const params = new URLSearchParams(location.search);
+    if (params.get("login") === "success") {
+      // 如果有，代表剛從 Portal 轉回來，直接設為登入
+      localStorage.setItem("isLogin", "true");
       setIsLogin(true);
+      
+      window.history.replaceState({}, document.title, "/");
+    } else {
+      // 2. 如果網址沒參數，就走原本的 localStorage 檢查
+      const loginStatus = localStorage.getItem("isLogin");
+      if (loginStatus === "true") {
+        setIsLogin(true);
+      }
     }
-  }, []);
+  }, [location]); // 當網址改變時重新偵測
 
   return (
     <>
       <Navbar isLogin={isLogin} setIsLogin={setIsLogin} />
 
       <Routes>
-        <Route path="/" element={<Navigate to="/courses" />} />
+        <Route path="/" element={<Announcements />} />
         <Route path="/login" element={<Login setIsLogin={setIsLogin} />} />
         <Route path="/courses" element={<Courses />} />  {/* 任何人都能看 */}
   
