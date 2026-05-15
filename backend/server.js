@@ -6,9 +6,25 @@ require("dotenv").config();
 
 const app = express();
 app.use(cors({
-    origin: "http://localhost:5173",
-    credentials: true
+    origin: ["http://localhost:5173", "http://localhost:31080"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// server.js
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
+
+  // 處理瀏覽器的 Preflight (OPTIONS) 詢問
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json());
 
@@ -25,7 +41,7 @@ app.use(session({
 
 // Portal 登入路由
 app.get("/auth/login", (req, res) => {
-  const redirectUri = "http://localhost:3000/auth/callback";
+  const redirectUri = "http://localhost:31080/auth/callback";
   const url = `https://portal.ncu.edu.tw/oauth2/authorization?response_type=code&client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=identifier chinese-name student-id academy-records`;
   res.redirect(url);
 });
@@ -97,7 +113,8 @@ app.post("/api/chatbot", async (req, res) => {
         // 從 .env 讀取 API Key
         "Authorization": `Bearer ${process.env.DIFY_API_KEY}`,
         "Content-Type": "application/json"
-      }
+      },
+      timeout: 90000
     });
 
     const text = response.data?.data?.outputs?.text || "🤖 抱歉，我暫時無法回答。";

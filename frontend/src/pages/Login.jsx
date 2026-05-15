@@ -1,6 +1,6 @@
 function Login() {
   const handleLogin = () => {
-    window.location.href = "http://localhost:3000/auth/login";
+    window.location.href = "http://localhost:31080/auth/login";
   };
 
   return (
